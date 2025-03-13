@@ -19,7 +19,6 @@ import {
 
 import { DialogWidget } from './dialog'
 
-
 const extension: JupyterFrontEndPlugin<void> = {
   id: "@jupyterlab-nbgallery/inject-uuid",
   autoStart: true,
@@ -44,9 +43,10 @@ function inject(panel: NotebookPanel, gallery_metadata: any): void{
         gallery_metadata['uuid'],
         "metadata"
       );
-
+      console.log("METADATA_URL: ", metadata_url)
       checkChange(metadata_url, gallery_metadata).then((changed) => {
           if (changed) {
+            console.log(`Notebook has changed, gallery_metadata_commit=${gallery_metadata["commit"]}`)
             let title = "Remote Notebook Has Changed";
             let body = new DialogWidget();
             body.content = `The notebook changed.`;
@@ -59,11 +59,33 @@ function inject(panel: NotebookPanel, gallery_metadata: any): void{
         showErrorMessage("Staging Failed", "An error occured checking for updates to the specified notebook.  Please ensure that you are logged in to the Gallery.");
       }
   }
+
   if (kernel.name == "ruby") {
     kernel.requestExecute({ code: "ENV['NBGALLERY_UUID']='" + gallery_metadata['uuid'] + "'", silent: true, stop_on_error: true });
     kernel.requestExecute({ code: "ENV['NBGALLERY_GIT_COMMIT_ID']='" + gallery_metadata['git_commit_id'] + "'", silent: true, stop_on_error: true });
   }
 }
+async function checkChange(metadata_url: any, gallery_metadata: any): Promise<boolean> {
+    try {
+        var nb_commit = gallery_metadata['commit'];
+        const headers: Headers = new Headers();
+        headers.set('Accept', 'application/json');
+        const response = await fetch(metadata_url, {
+            method: 'GET',
+            headers: headers
+        });
+        if (!response.ok) {
+          throw new Error(`Response status: ${response.status}`);
+        }
+        const json = await response.json()
+        const result = await (json.commit_id != nb_commit)
+        console.log(`NBGallery notebook commit_id=${json.commit_id}`)
+        return result
+    } catch (error) {
+        console.error(error);
+    }    
+}
+
 function injectUUID(panel: NotebookPanel): void {
   panel.sessionContext.ready.then(() => {
     let gallery_metadata: any;
@@ -90,23 +112,5 @@ function injectUUID(panel: NotebookPanel): void {
     }
   });
 }
-async function checkChange(metadata_url: any, gallery_metadata: any): Promise<boolean> {
-  try {
-      var nb_commit = gallery_metadata['commit'];
-      const headers: Headers = new Headers();
-      headers.set('Accept', 'application/json');
-      const response = await fetch(metadata_url, {
-          method: 'GET',
-          headers: headers
-      });
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-      const json = await response.json()
-      const result = await (json.commit_id != nb_commit)
-      return result
-  } catch (error) {
-      console.error(error);
-  }    
-}
+
 export default extension;
