@@ -72,7 +72,8 @@ async function checkChange(metadata_url: any, gallery_metadata: any): Promise<bo
         headers.set('Accept', 'application/json');
         const response = await fetch(metadata_url, {
             method: 'GET',
-            headers: headers
+            headers: headers,
+            credentials: 'include'
         });
         if (!response.ok) {
           throw new Error(`Response status: ${response.status}`);
