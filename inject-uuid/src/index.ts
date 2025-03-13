@@ -39,7 +39,7 @@ function inject(panel: NotebookPanel, gallery_metadata: any): void{
     kernel.requestExecute({ code: "import os; os.environ['NBGALLERY_UUID']='" + gallery_metadata['uuid'] + "'; os.environ['NBGALLERY_GIT_COMMIT_ID']='" + gallery_metadata['git_commit_id'] + "';", silent: true, stop_on_error: true });
     try {
       let metadata_url = URLExt.join(
-        'https://nbgallery-antimatter-jnam1.oss.cse-cst.gc.ca/', //TODO: Extract this from gallery metadata
+        'https://nbgallery-antimatter-dev.oss.cse-cst.gc.ca/', //TODO: Extract this from gallery metadata
         'notebooks',
         gallery_metadata['uuid'],
         "metadata"
